@@ -259,7 +259,10 @@ Function ConfigureApplications
     $owner = Get-MgApplicationOwner -ApplicationId $serviceAadApplication.Id
     if ($owner -eq $null)
     { 
-        New-MgApplicationOwnerByRef -ApplicationId $serviceAadApplication.Id  -BodyParameter = @{"@odata.id" = "htps://graph.microsoft.com/v1.0/directoryObjects/$user.ObjectId"}
+        $context = Get-MgContext
+        $userUPN = $context.Account
+        $user = Get-MgUser -UserId $userUPN
+        New-MgApplicationOwnerByRef -ApplicationId $serviceAadApplication.Id  -BodyParameter @{"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$($user.Id)"}
         Write-Host "'$($user.UserPrincipalName)' added as an application owner to app '$($serviceServicePrincipal.DisplayName)'"
     }
 
@@ -361,7 +364,10 @@ Function ConfigureApplications
     $owner = Get-MgApplicationOwner -ApplicationId $clientAadApplication.Id
     if ($owner -eq $null)
     { 
-        New-MgApplicationOwnerByRef -ApplicationId $clientAadApplication.Id  -BodyParameter = @{"@odata.id" = "htps://graph.microsoft.com/v1.0/directoryObjects/$user.ObjectId"}
+        $context = Get-MgContext
+        $userUPN = $context.Account
+        $user = Get-MgUser -UserId $userUPN
+        New-MgApplicationOwnerByRef -ApplicationId $clientAadApplication.Id  -BodyParameter @{"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$($user.Id)"}
         Write-Host "'$($user.UserPrincipalName)' added as an application owner to app '$($clientServicePrincipal.DisplayName)'"
     }
     Write-Host "Done creating the client application (ProfileSPA-SharedTokenCache)"
@@ -442,6 +448,7 @@ if ($null -eq (Get-Module -ListAvailable -Name "Microsoft.Graph.Applications")) 
 }
 
 Import-Module Microsoft.Graph.Applications
+Import-Module Microsoft.Graph.Users
 
 Set-Content -Value "<html><body><table>" -Path createdApps.html
 Add-Content -Value "<thead><tr><th>Application</th><th>AppId</th><th>Url in the Azure portal</th></tr></thead><tbody>" -Path createdApps.html
